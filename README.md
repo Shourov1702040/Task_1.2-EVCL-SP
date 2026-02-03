@@ -1,6 +1,6 @@
-* Localizes corrupted blocks via `LocCorruption` if a mismatch is detected.
+* The EVCL method is implemented using a Python socket programming environment for communication between the cloud server and the edge server. Primarily, 4 modules will be used for executing the data integrity verification operation 
 
-## 🛠️ Technical Workflow
+## Technical Workflow
 
 1.  **System Setup:** Parameters are established at the Cloud Server level.
 2.  **Challenge Issuance:** The system generates additional info for Edge Servers (ESs) to trigger a verification cycle.
