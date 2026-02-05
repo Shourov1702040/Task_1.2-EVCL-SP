@@ -1,4 +1,4 @@
-import random, os, sys, hashlib, math ,pickle, string, time, zlib, base64, time, re, csv
+import random, os, sys, hashlib, math, pickle, string, time, zlib, base64, time, re, csv
 from collections import deque, defaultdict
 from typing import List, Tuple, Dict, Any, Union
 from blake3 import blake3
@@ -529,4 +529,5 @@ def Detection_fucntion(list_A, key):
         expected_hash = key_2[i*8:(i+1)*8]
         if item[:8] != expected_hash:
             detected.append(i)
+
     return detected
