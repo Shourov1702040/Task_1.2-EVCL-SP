@@ -1,12 +1,8 @@
-* The EVCL method is implemented using a Python socket programming environment for communication between the cloud server and the edge server. Primarily, 4 modules will be used for executing the data integrity verification operation 
+* The EVCL method is implemented using a Python socket programming environment for communication between the cloud server and the edge server. Primarily, 4 very basic modules will be used for executing the data integrity verification operation 
 
-## Technical Workflow
+## Working Modules
 
-1.  **System Setup:** Parameters are established at the Cloud Server level.
-2.  **Challenge Issuance:** The system generates additional info for Edge Servers (ESs) to trigger a verification cycle.
-3.  **Proof Generation:** Edge Servers respond with a proof tag and a localization key.
-4.  **Audit & Response:** The Cloud Server validates the response; if the data is compromised, it identifies the specific corrupted blocks immediately.
+1.  **Cloud Server (CS)**: The Functionalities_CS.py consists of all the operations of CS in the backend. The CS.py is the main file for the simulation of CS operation, including sending challenges, receiving responses, and integrity verification. 
+2.  **Edge Server (ES)**: Similarly, the Functionalities_ES.py consists of all the operations of ES in the backend. The ES.py for the simulation of including receiving challenges, generating an integrity proof, and sending it back to the CS. 
 
-## 🏁 Conclusion
-
-This framework provides a scalable, secure method for managing data across distributed networks. By utilizing mathematical proofs for integrity, it ensures that data remains untampered and verifiable regardless of its physical storage location.
+To execute the verification process, first run the CS.py and then ES.py. Each ES.py file will represent one individual ES.  
