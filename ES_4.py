@@ -5,10 +5,10 @@ import socket, pickle, Functionalities, struct, traceback, os, time
 
 client_id = "Edge-Server-4"
 block_size = 512  #KB
-data_loc ="C:/My Drive/PHD Works/Task 1/Experiments RM-1/replicas"
+data_loc ="replicas"
 # replica_ids = ['R-2', 'R-3', 'R-5', 'R-7']
 
-csv_filename = "C:/My Drive/PHD Works/Task 1/Experiments RM-1/E2VL/edge_data.csv"
+csv_filename = "edge_data.csv"
 replica_ids = Functionalities.csv_to_edge_info(csv_filename, client_id)
 
 Data_replicas = Functionalities.load_replicas_from_dir_ES(data_loc, replica_ids, block_size)
@@ -100,4 +100,5 @@ except Exception as e:
 finally:
     print(f"[{client_id}] Closing connection.")
     Edge_server.close()
+
 
