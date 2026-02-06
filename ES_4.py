@@ -3,7 +3,7 @@ import socket, pickle, Functionalities, struct, traceback, os, time
 
 # ______________________________ Edge Server Information_________________________________________#
 
-client_id = "Edge-Server-3"
+client_id = "Edge-Server-4"
 block_size = 512  #KB
 data_loc ="C:/My Drive/PHD Works/Task 1/Experiments RM-1/replicas"
 # replica_ids = ['R-2', 'R-3', 'R-5', 'R-7']
@@ -100,3 +100,4 @@ except Exception as e:
 finally:
     print(f"[{client_id}] Closing connection.")
     Edge_server.close()
+
