@@ -1,6 +1,5 @@
-import socket, threading, sys, pickle, random, string, time, os
-import Functionalities
-
+import socket, threading, sys, pickle, random, string, time, os, traceback
+import Functionalities_CS as Functionalities
 connected_clients = {}
 connected_clients_lock = threading.Lock()
 running = True
@@ -21,8 +20,8 @@ csv_filename = "C:/My Drive/PHD Works/Task 1/Experiments RM-1/E2VL/edge_data.csv
 Functionalities.index_alloc(csv_filename, total_clients, Total_data, data_scale)
 edge_info = Functionalities.csv_to_edge_info(csv_filename)
 
-data_loc = "C:/My Drive/PHD Works/Task 1/Experiments RM-1/replicas"
-Functionalities.generate_replicas(block_size, replica_scale, Total_data, data_loc, use_random_data=True)
+data_loc = "C:/My Drive/PHD Works/Task 1/Experiments RM-1/E2VL/replicas"
+# Functionalities.generate_replicas(block_size, replica_scale, Total_data, data_loc, use_random_data=True)
 
 time_all = []
 
@@ -39,6 +38,7 @@ def generate_messages_for_edges():
     start_time_GC = time.time()
     challenges, proof_all, loc_key_all = Functionalities.generate_challenge(edge_info, Data_replicas)
     time_all.append(time.time() - start_time_GC)
+    # print(proof_all)
 
     for i in range(len([*edge_info])):
         client_id = [*edge_info][i]
@@ -102,11 +102,12 @@ def handle_edge_server(edge_server_socket, edge_server_address):
                 Loc_key_ES = Response_edge[2]
                 Original_proof_root_node = proof_all[E_id]
                 Original_Loc_key_ES = loc_key_all[E_id]
-
+                # print(f"Original_proof_root_node::::::::::::::::: {Original_proof_root_node}")
                 if Original_proof_root_node[4] == proof_root_node[4]:
                     print(f"{E_id}'s data is integral")
                 else:
                     print(f"{E_id}'s data is not integral")
+                    # print(f"________________ {Original_Loc_key_ES}")
                     loc_result = Functionalities.Detection_function_from_dicts(
                         Original_Loc_key_ES, Loc_key_ES
                     )
@@ -115,6 +116,7 @@ def handle_edge_server(edge_server_socket, edge_server_address):
                 print(f"Time of Challenge generation, message send and verification: {time_all}\n")
             except Exception as e:
                 print(f"Error decoding client message from {current_client_id}: {e}")
+                traceback.print_exc()
                 continue
 
     except Exception as e:
@@ -126,7 +128,7 @@ def handle_edge_server(edge_server_socket, edge_server_address):
 
 iteration_counter = 0
 auto_running = False
-n_iter = 10  # << Set total number of iterations you want
+n_iter = 2  # << Set total number of iterations you want
 interval_sec = 4
 
 def box_animation(duration=2.5, delay=0.0225):
@@ -180,6 +182,7 @@ def auto_execute():
                 print(f"No message available for {client_id}")
     except Exception as e:
         print(f"[AutoMode] Error during cycle #{iteration_counter}: {e}")
+        # traceback.print_exc()  
 
     if iteration_counter < n_iter:
         threading.Timer(interval_sec, auto_execute).start()
