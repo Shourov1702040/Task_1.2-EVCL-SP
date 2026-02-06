@@ -16,11 +16,11 @@ sample_scale = 32
 
 total_clients = 10
 
-csv_filename = "C:/My Drive/PHD Works/Task 1/Experiments RM-1/E2VL/edge_data.csv"
+csv_filename = "edge_data.csv"
 Functionalities.index_alloc(csv_filename, total_clients, Total_data, data_scale)
 edge_info = Functionalities.csv_to_edge_info(csv_filename)
 
-data_loc = "C:/My Drive/PHD Works/Task 1/Experiments RM-1/E2VL/replicas"
+data_loc = "replicas"
 # Functionalities.generate_replicas(block_size, replica_scale, Total_data, data_loc, use_random_data=True)
 
 time_all = []
@@ -271,3 +271,4 @@ with connected_clients_lock:
 
 Cloud_server.close()
 print("Cloud_server shut down.")
+
