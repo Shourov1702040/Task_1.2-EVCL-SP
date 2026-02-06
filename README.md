@@ -1,4 +1,4 @@
-The sVCL method is implemented using a Python socket programming environment for communication between the cloud server and the edge server. Primarily, 4 very basic modules will be used for executing the data integrity verification operation 
+The SVCL method is implemented using a Python socket programming environment for communication between the cloud server and the edge server. Primarily, 4 very basic modules will be used for executing the data integrity verification operation 
 
 ## Working Modules
 
