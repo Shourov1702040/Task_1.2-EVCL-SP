@@ -1,4 +1,4 @@
-import random, os, sys, hashlib, math, pickle, string, time, zlib, base64, time, re, csv
+import random, os, sys, hashlib, math ,pickle, string, time, zlib, base64, time, re, csv, fe_reconstruct
 from collections import deque, defaultdict
 from typing import List, Tuple, Dict, Any, Union
 from blake3 import blake3
@@ -24,10 +24,10 @@ def generate_replicas(block_size_KB, num_blocks, num_replicas, save_dir, use_ran
 
         file_path = os.path.join(save_dir, f"replica_{r}.txt")
         with open(file_path, "wb") as f:
-            # Use pickle to dump list of chunks
-            pickle.dump(chunks, f, protocol=0)  # ASCII protocol
+ 
+            pickle.dump(chunks, f, protocol=0) 
         replica_files.append(file_path)
-    # return replica_files
+
 
 # _________________________________________ Data Load  __________________________________________
 def load_replicas_from_dir(save_dir, block_size_KB):
@@ -52,26 +52,20 @@ def load_replicas_from_dir(save_dir, block_size_KB):
 def index_alloc(loc_index,  T_es, Total_data, N_r):
     with open(loc_index, 'w', newline='') as f:
         writer = csv.writer(f)
-        
-        # Write header row
+
         header = [f'Edge-Server-{i+1}' for i in range(T_es)]
         writer.writerow(header)
-        
-        # Generate unique R values for each column and sort them
+
         all_r_values = [f'R-{i+1}' for i in range(Total_data)]
-        
-        # For each column, assign unique R values and sort them
+
         columns_data = []
         for i in range(Total_data):
-            # Shuffle and take first N_r values for this column, then sort
             shuffled = all_r_values.copy()
             random.shuffle(shuffled)
             column_values = shuffled[:N_r]
-            # Sort by the number after "R-"
             column_values.sort(key=lambda x: int(x.split('-')[1]))
             columns_data.append(column_values)
         
-        # Write rows by transposing the columns data
         for row_idx in range(N_r):
             row = [columns_data[col_idx][row_idx] for col_idx in range(Total_data)]
             writer.writerow(row)
@@ -82,14 +76,11 @@ def csv_to_edge_info(csv_filename, e_id = ''):
     with open(csv_filename, 'r') as f:
         reader = csv.reader(f)
         
-        # Read header row to get column names (Edge-Servers)
         headers = next(reader)
         
-        # Initialize empty lists for each Edge-Server
         for header in headers:
             edge_info[header] = []
         
-        # Read data rows and populate the lists
         for row in reader:
             for i, r_value in enumerate(row):
                 edge_info[headers[i]].append(r_value)
@@ -119,17 +110,23 @@ def hash_data_SHA_3(data, sec_code):
     """Hashes data using SHA3-256 with security code concatenation."""
     if isinstance(data, str):
         data = data.encode()
-    # Convert sec_code to bytes if it isn't already
+    
     if isinstance(sec_code, str):
         sec_code = sec_code.encode()
     data_with_code = data + sec_code
     return hashlib.sha3_256(data_with_code).hexdigest()
 
+def string_SHA_3(data):
+    if isinstance(data, str):
+        data = data.encode()
+
+    return hashlib.sha3_256(data).hexdigest()
+
 def hash_data_black_3(data, sec_code):
     """Hashes data using BLAKE3 with security code concatenation."""
     if isinstance(data, str):
         data = data.encode()
-    # Convert sec_code to bytes if it isn't already
+    
     if isinstance(sec_code, str):
         sec_code = sec_code.encode()
     data_with_code = data + sec_code
@@ -146,17 +143,17 @@ def generate_leaf_node(replica, replica_id, shuffle_key, sec_code, modify=True):
         if modify==True and i==1:
             hash_i = Modify_data_block_hash(hash_i)
         node = [f"{replica_id}-Node-{node_counter}", 0, i, True, hash_i]
-        current_level.append(node)   # keep references so we can update in place on promotion
+        current_level.append(node)  
         hashes.append(hash_i)
         node_counter += 1
-    loc_key = Loc_key_gen(hashes)
-    return current_level, loc_key
+    # loc_key = Loc_key_gen(hashes)
+    return current_level, hashes
 
 def resequence_nodes(data, prefix):
     resequenced = []
     for i, row in enumerate(data):
         new_row = [
-            f"{prefix}-Node-{i}",  # new node id
+            f"{prefix}-Node-{i}", 
             0,                # reset ln to 0
             i,                # reset pn to sequence number
             True,             # keep is_leaf value
@@ -169,7 +166,7 @@ def resequence_nodes_ES(data, R_ids):
     resequenced = []
     for i, row in enumerate(data):
         new_row = [
-            f"{prefix}-Node-{i}",  # new node id
+            f"{prefix}-Node-{i}", 
             0,                # reset ln to 0
             i,                # reset pn to sequence number
             True,             # keep is_leaf value
@@ -179,12 +176,11 @@ def resequence_nodes_ES(data, R_ids):
     return resequenced
 
 def build_OMHT(leaf_nodes, replica_id, shuffle_key, sec_code):
-    nodes = leaf_nodes[:]        # copy list
-    node_counter = len(leaf_nodes)   # next ID starts after the last leaf
+    nodes = leaf_nodes[:]       
+    node_counter = len(leaf_nodes)   
     current_level = leaf_nodes
     ln = 1
 
-    # Build upper levels
     while len(current_level) > 1:
         next_level = []
         pos = 0
@@ -193,7 +189,7 @@ def build_OMHT(leaf_nodes, replica_id, shuffle_key, sec_code):
             group = current_level[i:i+3]
 
             if len(group) == 3 or len(group) == 2:
-                # merge 2 or 3
+                
                 merged_hash = hash_data_black_3("".join(str(n[4]) for n in group), sec_code)
                 new_node = [f"{replica_id}-Node-{node_counter}", ln, pos, False, merged_hash]
                 nodes.append(new_node)
@@ -201,11 +197,11 @@ def build_OMHT(leaf_nodes, replica_id, shuffle_key, sec_code):
                 node_counter += 1
 
             elif len(group) == 1:
-                # Rule 4: promote single node (update only ln, pn)
+                
                 promoted = group[0]
-                promoted[1] = ln  # ln
-                promoted[2] = pos # pn
-                # do NOT change is_leaf or h_ln_pn
+                promoted[1] = ln  
+                promoted[2] = pos 
+
                 next_level.append(promoted)
 
             pos += 1
@@ -214,7 +210,6 @@ def build_OMHT(leaf_nodes, replica_id, shuffle_key, sec_code):
         current_level = next_level
         ln += 1
 
-    # sort nodes by level and position
     return sorted(nodes, key=lambda n: (n[1], n[2]))
 
 
@@ -226,17 +221,14 @@ def generate_edge_dict(total_clients, total_data, data_scale):
 
     edge_dict = {}
     for cid in edge_server_ids:
-        nums = sorted(random.sample(range(1, total_data+1), data_scale))  # 4 unique numbers from 0..N
+        nums = sorted(random.sample(range(1, total_data+1), data_scale)) 
         nums = [f"R-{n}" for n in nums] 
         edge_dict[cid] = nums
 
     return edge_dict
 
 def Generate_Additional_info(global_tree, edge_replicas):
-    # Build lookup: id -> node
     id_map = {n[0]: n for n in global_tree}
-
-    # Map replica IDs (R-1, R-2, ...) -> leaf IDs (G-Node-x)
     mapped = {}
     for rid in edge_replicas:
         num = int(re.search(r'(\d+)$', rid).group(1)) - 1
@@ -246,14 +238,13 @@ def Generate_Additional_info(global_tree, edge_replicas):
 
     required_leaves = set(mapped.values())
 
-    # Group nodes by level
     level_nodes = defaultdict(list)
     for n in global_tree:
         level_nodes[n[1]].append(n)
 
     max_level = max(level_nodes.keys())
 
-    # Build child relationships
+
     children_map = defaultdict(list)
     for n in global_tree:
         lvl, pos = n[1], n[2]
@@ -265,11 +256,11 @@ def Generate_Additional_info(global_tree, edge_replicas):
                     children_map[parent[0]].append(n[0])
                     break
 
-    # Compute descendant leaves
+
     descendant_map = {}
     def get_descendants(node_id):
         node = id_map[node_id]
-        if node[3]:  # is_leaf
+        if node[3]: 
             descendant_map[node_id] = {node_id}
             return {node_id}
         if node_id in descendant_map:
@@ -283,10 +274,9 @@ def Generate_Additional_info(global_tree, edge_replicas):
     for nid in id_map:
         get_descendants(nid)
 
-    # Find lowest covering parent
     candidates = []
     for nid, node in id_map.items():
-        if not node[3]:  # internal only
+        if not node[3]: 
             if required_leaves.issubset(descendant_map[nid]):
                 candidates.append(node)
 
@@ -295,7 +285,6 @@ def Generate_Additional_info(global_tree, edge_replicas):
 
     covering = min(candidates, key=lambda n: n[1])
 
-    # -------- NEW: find additional required nodes --------
     additional_nodes = set()
 
     def find_additional(node_id):
@@ -310,20 +299,19 @@ def Generate_Additional_info(global_tree, edge_replicas):
         for child in children:
             child_leaves = descendant_map[child]
             if child_leaves & required_leaves:  
-                # Child has required leaves
-                if not id_map[child][3]:  # internal
+                
+                if not id_map[child][3]:  
                     find_additional(child)
-                elif child not in required_leaves:  # leaf not in required list
+                elif child not in required_leaves:  
                     additional_nodes.add(child)
             else:
-                # Child has no required leaves -> include it directly
                 additional_nodes.add(child)
 
     find_additional(covering[0])
     additionals_nodes = sorted(additional_nodes, key=lambda x: int(x.split('-')[-1]))
     proof_root = covering
     
-    return proof_root,  additionals_nodes
+    return proof_root, additionals_nodes
 
 def generate_challenge(edge_info, Data_replicas):
     replica_ids = [f"R-{i}" for i in range(1, len(Data_replicas)+1)]
@@ -342,12 +330,15 @@ def generate_challenge(edge_info, Data_replicas):
     G_Tree = []
 
     block_loc_key = {}
+    block_hashs_for_replicas = {}
 
     for i in range(len(Data_replicas)):
-        leafs, loc_key = generate_leaf_node(Data_replicas[i], replica_ids[i], shuffle_key, sec_code, False)
+        # leafs, loc_key = generate_leaf_node(Data_replicas[i], replica_ids[i], shuffle_key, sec_code, False)
+        leafs, hashes = generate_leaf_node(Data_replicas[i], replica_ids[i], shuffle_key, sec_code, False)
         tree = build_OMHT(leafs, replica_ids[i], shuffle_key, sec_code)
         Trees.append(tree)
-        block_loc_key[f"R-{i+1}"] = loc_key
+        # block_loc_key[f"R-{i+1}"] = loc_key
+        block_hashs_for_replicas[f"R-{i+1}"]= hashes
         Roots.append(tree[-1])
 
     G_leafs = resequence_nodes(Roots, "G")
@@ -358,14 +349,21 @@ def generate_challenge(edge_info, Data_replicas):
 
     for e_id, replicas in edge_info.items():
         Specific_List = replicas
+        K_ES_HW = fe_reconstruct.derive_es_key(e_id)
+
         proof_root, additional_nodes_ids = Generate_Additional_info(G_Tree, Specific_List)
+
+        root_update = PUF_derived_Replica_root(proof_root, K_ES_HW)
+        # print(f"-------------------------------------------{root_update}")
         additional_nodes = [n for n in G_Tree if n[0] in additional_nodes_ids]
-        loc_keys = {key: block_loc_key[key] for key in Specific_List if key in block_loc_key}
+
+        # loc_keys = {key: block_loc_key[key] for key in Specific_List if key in block_loc_key}
+        loc_keys = {R_id: Loc_key_gen(block_hashs_for_replicas[R_id], K_ES_HW, R_id) for R_id in Specific_List if R_id in block_hashs_for_replicas}
 
         chal = [e_id, shuffle_key, sec_code, additional_nodes]
         challenge_all.append(chal)
-
-        proof_all[e_id] = proof_root
+        
+        proof_all[e_id] = list(root_update) 
         loc_key_all[e_id] = loc_keys
     
     return challenge_all, proof_all, loc_key_all
@@ -466,13 +464,45 @@ def build_minimal_tree(G_leafs: List[List], A_info: List[List], sec_code: str) -
     root = max(final_nodes_sorted, key=lambda n: n[1]) 
     return root
 
+def PUF_derived_Replica_root(root, K_ES_HW):
+    root_update = root
+    root_update[-1]= string_SHA_3(root[-1]+K_ES_HW)
+
+    return root_update
+
 
 # ________________________________ Localization Key Generation ____________________________________
 
-def Loc_key_gen(list_B_added):
-    # Use first 8 hex chars from each pre-hashed item
-    partial_hashes = [item[:8] for item in list_B_added]
-    key = ''.join(partial_hashes)
+# def Loc_key_gen(list_B_added):
+#     # Use first 8 hex chars from each pre-hashed item
+#     partial_hashes = [item[:8] for item in list_B_added]
+#     key = ''.join(partial_hashes)
+#     raw_bytes = bytes.fromhex(key)
+#     cctx = zstd.ZstdCompressor(level=22)  # max compression
+#     compressed = cctx.compress(raw_bytes)
+#     return base64.b85encode(compressed).decode()
+#     return key
+
+def Loc_key_gen(block_hashes, K_ES_HW, Replica_id):
+
+    new_digest = []
+    for old_h in block_hashes:
+        new_d = string_SHA_3(old_h+K_ES_HW)
+        new_digest.append(new_d)
+
+    partial_hashes = [item[:8] for item in new_digest]
+    Replica_id_hex = Replica_id.encode().hex().ljust(12, '0')
+
+    block_binding = []
+
+    for decimal_num in range(len(partial_hashes)):
+        block_id = f"{decimal_num:03x}"
+        block_b = Replica_id_hex + block_id + partial_hashes[decimal_num]
+
+        block_binding.append(block_b)
+
+
+    key = ''.join(block_binding)
     raw_bytes = bytes.fromhex(key)
     cctx = zstd.ZstdCompressor(level=22)  # max compression
     compressed = cctx.compress(raw_bytes)
@@ -493,10 +523,12 @@ def Detection_function_from_dicts(dict_A, dict_B):
             continue  
         if key_A == key_B:
             continue
+        # print(f"-----------------------------------------A---------{key_A}")
+        # print(f"-----------------------------------------B---------{key_B}")
         decompressed_A = dctx.decompress(base64.b85decode(key_A.encode())).hex()
         decompressed_B = dctx.decompress(base64.b85decode(key_B.encode())).hex()
-        chunks_A = [decompressed_A[i*8:(i+1)*8] for i in range(len(decompressed_A)//8)]
-        chunks_B = [decompressed_B[i*8:(i+1)*8] for i in range(len(decompressed_B)//8)]
+        chunks_A = [decompressed_A[i*23:(i+1)*23] for i in range(len(decompressed_A)//23)]
+        chunks_B = [decompressed_B[i*23:(i+1)*23] for i in range(len(decompressed_B)//23)]
 
         corrupted_indices = []
 
@@ -529,5 +561,4 @@ def Detection_fucntion(list_A, key):
         expected_hash = key_2[i*8:(i+1)*8]
         if item[:8] != expected_hash:
             detected.append(i)
-
     return detected
