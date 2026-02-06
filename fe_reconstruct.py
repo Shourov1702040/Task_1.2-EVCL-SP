@@ -36,12 +36,12 @@ def get_puf_derived_device_key(helper_path: str = "helper.dat",
     return stable_key
 
 
-#To avoid hardware releted unexpected errors and simplicity we are loading the PUF derived key from helper.dat file 
+#To avoid hardware releted unexpected errors and simplicity, we are loading the PUF-derived key from the helper.dat file 
 
 
 def derive_es_key(es_id: str, out_len: int = 32) -> str:
 
-    dat_path = r"C:\My Drive\PHD Works\Task 1\Experiments RM-1\E2VL\helper.dat"
+    dat_path = r"helper.dat"
     secret = Path(dat_path).read_bytes() 
 
     ctx = b"EVCL-PUF-DERIVE-v1"
@@ -54,4 +54,5 @@ def derive_es_key(es_id: str, out_len: int = 32) -> str:
     return h.digest(length=out_len).hex()
 
 # print(derive_es_key("ES_01",))
+
 
