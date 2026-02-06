@@ -1,15 +1,16 @@
-import socket, pickle, Functionalities, struct, traceback, os, time
-
+import socket, pickle, struct, traceback, os, time, fe_reconstruct
+import Functionalities_ES as Functionalities
 
 # ______________________________ Edge Server Information_________________________________________#
 
 client_id = "Edge-Server-3"
 block_size = 512  #KB
-data_loc ="C:/My Drive/PHD Works/Task 1/Experiments RM-1/replicas"
-# replica_ids = ['R-2', 'R-3', 'R-5', 'R-7']
+data_loc ="C:/My Drive/PHD Works/Task 1/Experiments RM-1/E2VL/replicas"
+# replica_ids = ['R-2', 'R-3', 'R-4', 'R-7', 'R-8']
 
 csv_filename = "C:/My Drive/PHD Works/Task 1/Experiments RM-1/E2VL/edge_data.csv"
 replica_ids = Functionalities.csv_to_edge_info(csv_filename, client_id)
+# print(replica_ids)
 
 Data_replicas = Functionalities.load_replicas_from_dir_ES(data_loc, replica_ids, block_size)
 
@@ -27,8 +28,9 @@ def generate_reply_message(challenge_message, client_id, replica_ids, Data_repli
     Roots_ES = []
     G_leafs_ES = []
     block_loc_key = {}
-
+    # print(challenge_message)
     ES_id, sh_key, sec_code, A_info = tuple(challenge_message)
+    K_ES_HW = fe_reconstruct.derive_es_key(client_id)
 
     if client_id != ES_id:
         print(f"[{client_id}] Wrong Edge Server in challenge. Expected {client_id}, got {ES_id}")
@@ -36,19 +38,23 @@ def generate_reply_message(challenge_message, client_id, replica_ids, Data_repli
 
     for index_ss in range(len(Data_replicas)):
         modification_status = False
-        if index_ss==2:
-            modification_status = True
-        leafs, loc_key = Functionalities.generate_leaf_node(Data_replicas[index_ss], replica_ids[index_ss], sh_key, sec_code, modification_status)
-        tree = Functionalities.build_OMHT(leafs, replica_ids[index_ss], sh_key, sec_code)
+        # if index_ss==0:
+        #     modification_status = True     # Corrupting data
+        leafs, hashes = Functionalities.generate_leaf_node(Data_replicas[index_ss], replica_ids[index_ss], sh_key, sec_code, modification_status)
+        loc_key = Functionalities.Loc_key_gen(hashes, K_ES_HW, replica_ids[index_ss]) # PUF derived localization key
+        tree = Functionalities.build_OMHT(leafs, replica_ids[index_ss], sh_key, sec_code) 
         Trees_ES.append(tree)
         block_loc_key[replica_ids[index_ss]] = loc_key
+        # temp_root = Functionalities.PUF_derived_Replica_root(tree[-1], K_ES_HW) #PUF derived proof
         Roots_ES.append(tree[-1])
 
     # print(Trees_ES[0])
     G_leafs_ES = Functionalities.transform_list(Roots_ES)
     root = Functionalities.build_minimal_tree(G_leafs_ES, A_info, sec_code)
-
-    Response_edge = [client_id, root, block_loc_key]
+    final_root = Functionalities.PUF_derived_Replica_root(root, K_ES_HW)
+    # print(f"---------------block_loc_key---------{block_loc_key}")
+    Response_edge = [client_id, final_root, block_loc_key]
+    # print(f"Response_edge::::::::::::::::: {Response_edge}")
     return Response_edge
 
 # _________________________________ Main Edge Server setup _______________________________________#
