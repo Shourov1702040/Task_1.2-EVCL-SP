@@ -3,7 +3,7 @@ import Functionalities_ES as Functionalities
 
 # ______________________________ Edge Server Information_________________________________________#
 
-client_id = "Edge-Server-1"
+client_id = "Edge-Server-2"
 block_size = 512  #KB
 data_loc ="C:/My Drive/PHD Works/Task 1/Experiments RM-1/E2VL/replicas"
 # replica_ids = ['R-2', 'R-3', 'R-4', 'R-7', 'R-8']
