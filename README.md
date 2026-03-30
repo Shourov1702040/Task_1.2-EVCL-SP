@@ -1,8 +1,48 @@
-The SVCL method is implemented using a Python socket programming environment for communication between the cloud server and the edge server. Primarily, 4 very basic modules will be used for executing the data integrity verification operation 
+# SVCL: Data Integrity Verification for Edge Computing
+
+The SVCL method is implemented using **Python sockets** to manage communication between cloud and edge servers. The system uses four primary modules to execute data integrity verification within a real-time experimental edge computing environment.
+
+---
 
 ## Working Modules
 
-1.  **Cloud Server (CS)**: The Functionalities_CS.py consists of all the operations of CS in the backend. The CS.py is the main file for the simulation of CS operation, including sending challenges, receiving responses, and integrity verification. 
-2.  **Edge Server (ES)**: Similarly, the Functionalities_ES.py consists of all the operations of ES in the backend. The ES.py for the simulation of including receiving challenges, generating an integrity proof, and sending it back to the CS. 
+### 1. Cloud Server (CS)
+* **Functionalities_CS.py**: Contains the backend operations and logic for the Cloud Server.
+* **CS.py**: The main execution file. It simulates CS operations, including sending challenges, receiving responses, and performing integrity verification.
 
-To execute the verification process, first run the CS.py and then ES.py. Each ES.py file will represent one individual ES.  
+### 2. Edge Server (ES)
+* **Functionalities_ES.py**: Contains the backend operations and logic for the Edge Server.
+* **ES_N.py**: The main execution file for the Edge Server. It handles receiving challenges, generating integrity proofs, and returning them to the CS. Each instance of this file represents an individual Edge Server.
+
+---
+
+## Setup and Execution
+
+To run the verification process, distribute the files and configure the network as follows:
+
+### Step 1: Cloud Server Setup
+Place the following files on the Cloud Server device (Windows, Linux, or other machines):
+* `CS.py`
+* `Functionalities_CS.py`
+* `fe_reconstruct.py`
+* `helper.dat`
+* `edge_data.csv`
+
+### Step 2: Edge Server Setup
+Place the following file on the Edge Server device (e.g., Raspberry Pi):
+* `ES_N.py`
+
+### Step 3: Network Configuration
+1.  Identify the IP address of the **Cloud Server** device.
+2.  Open the `ES_N.py` file on the Edge Server.
+3.  Update the server IP address field to match the Cloud Server's current network IP.
+
+### Step 4: Execution
+1.  **First**, run the Cloud Server:
+    ```bash
+    python CS.py
+    ```
+2.  **Then**, run the Edge Server:
+    ```bash
+    python ES_N.py
+    ```
