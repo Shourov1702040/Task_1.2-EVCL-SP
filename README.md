@@ -31,6 +31,8 @@ Place the following files on the Cloud Server device (Windows, Linux, or other m
 ### Step 2: Edge Server Setup
 Place the following file on the Edge Server device (e.g., Raspberry Pi):
 * `ES_N.py`
+* `Functionalities_CS.py`
+* `edge_data.csv`
 
 ### Step 3: Network Configuration
 1.  Identify the IP address of the **Cloud Server** device.
